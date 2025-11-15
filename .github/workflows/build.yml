@@ -60,11 +60,9 @@ jobs:
         ls | grep precomp_py*.so | xargs -I orig mv orig precomp_py.so
 
     - name: Archive Release
-      uses: thedoctor0/zip-release@0.7.5
-      with:
-        type: 'zip'
-        filename: 'precomp-linux-x86_64.zip'
-        directory: build/
+      run: |
+        cd build/;
+        zip -r precomp-linux-x86_64.zip .
 
     - name: Upload Artifacts (Linux)
       uses: actions/upload-artifact@v4
