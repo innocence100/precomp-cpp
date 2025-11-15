@@ -14,7 +14,7 @@ jobs:
     container: quay.io/pypa/manylinux_2_28_x86_64
     
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     - name: Install dependencies and Build
       run: |
@@ -55,9 +55,82 @@ jobs:
         fi
 
     - name: Upload Artifacts (Linux)
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3
       with:
         name: precomp-linux-x86_64
         path: |
           build/precomp
           build/*.so
+
+  # =================================================================
+  # Windows 构建
+  # =================================================================
+  build_windows:
+    name: Windows (MSVC)
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install cmake pybind11
+
+    - name: Configure CMake
+      # Windows 下 pybind11 通常能通过 setup-python 自动找到路径
+      # 但为了保险，我们依然开启 PYBIND11_FINDPYTHON
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND11_FINDPYTHON=ON
+
+    - name: Build
+      run: cmake --build build --config Release --parallel
+
+    - name: Upload Artifacts (Windows)
+      uses: actions/upload-artifact@v3
+      with:
+        name: precomp-windows-x64
+        path: |
+          build/Release/precomp.exe
+          build/Release/*.pyd
+
+  # =================================================================
+  # macOS 构建
+  # =================================================================
+  build_macos:
+    name: macOS
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install cmake pybind11
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND11_FINDPYTHON=ON
+
+    - name: Build
+      run: cmake --build build --config Release --parallel
+
+    - name: Upload Artifacts (macOS)
+      uses: actions/upload-artifact@v3
+      with:
+        name: precomp-macos
+        path: |
+          build/precomp
+          build/*.so
+          # macOS 下 pybind11 生成的后缀可能是 .so 或 .dylib
