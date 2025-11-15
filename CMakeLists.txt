@@ -6,6 +6,15 @@ project(precomp)
 set(SRCDIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(OBJDIR ${CMAKE_CURRENT_BINARY_DIR})
 
+set(PYBIND11_FINDPYTHON ON)
+include(FetchContent)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git
+  GIT_TAG        v2.11.1
+)
+FetchContent_MakeAvailable(pybind11)
+
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
   message(STATUS "Build type: Release")
@@ -151,11 +160,15 @@ target_compile_definitions(precomp_dll_shared PRIVATE -DPRECOMPDLL)
 add_library(precomp_dll_static STATIC ${GIF_SRC} ${BZIP_SRC} ${ZLIB_SRC} ${PACKARI_SRC}
                                ${PACKJPG_SRC} ${PACKMP3_SRC} ${PREFLATE_SRC}
                                ${BRUNSLI_SRC} ${BROTLI_SRC} ${PRECOMP_UTILS_SRC} ${PRECOMP_IO_SRC} ${FORMAT_HANDLERS_SRC} ${PRECOMP_DLL_SRC} ${LIBPRECOMP_HDR} ${PRECOMP_DLL_HDR})
+target_compile_definitions(precomp_dll_static PRIVATE -DPRECOMPSTATIC)
+
 if (UNIX)
     target_link_libraries(precomp_dll_shared PRIVATE Threads::Threads)
     target_link_libraries(precomp_dll_static PRIVATE Threads::Threads)
 endif()
-target_compile_definitions(precomp_dll_static PRIVATE -DPRECOMPSTATIC)
+
+# 强制开启 -fPIC，允许该静态库被链接到 Python 扩展模块(共享库)中
+set_target_properties(precomp_dll_static PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_executable(dlltest ${LIBPRECOMP_HDR} ${DLLTEST_SRC})
 target_link_libraries(dlltest PRIVATE precomp_dll_shared)
@@ -170,3 +183,23 @@ else()
 endif()
 
 install(TARGETS precomp DESTINATION bin)
+
+# --- 新增：Python 扩展模块 ---
+# 生成 precomp_py.pyd (Windows) 或 precomp_py.so (Linux)
+pybind11_add_module(precomp_py precomp_py.cpp)
+
+# 链接静态库
+target_link_libraries(precomp_py PRIVATE precomp_dll_static)
+if (UNIX)
+    target_link_libraries(precomp_py PRIVATE Threads::Threads)
+    # 设置 RPATH 为 $ORIGIN
+    # libprecomp_dll_shared.so 在同一个目录下
+    set_target_properties(precomp_py PROPERTIES
+        BUILD_WITH_INSTALL_RPATH TRUE
+        INSTALL_RPATH "$ORIGIN"
+    )
+    
+    # 在构建阶段也生效（防止测试时报错）
+    set_property(TARGET precomp_py APPEND PROPERTY RPATH "$ORIGIN")
+endif()
+# ---------------------------
