@@ -65,21 +65,63 @@ jobs:
 
 
     - name: Archive Release
-      uses: thedoctor0/zip-release@0.7.5
-      with:
-        type: 'zip'
-        filename: 'precomp-linux-x86_64.zip'
-        directory: build/
+      run: zip ../precomp-linux-x86_64.zip precomp *.so *.a
 
     - name: Upload Artifacts (Linux)
       uses: actions/upload-artifact@v4
       with:
         name: precomp-linux-x86_64
-        path: build/precomp-linux-x86_64.zip
+        path: precomp-linux-x86_64.zip
+
+  build_windows:
+    name: Windows (MSVC)
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install cmake pybind11
+
+    - name: Configure CMake
+      # Windows 下 pybind11 通常能通过 setup-python 自动找到路径
+      # 但为了保险，我们依然开启 PYBIND11_FINDPYTHON
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND11_FINDPYTHON=ON
+
+    - name: Build
+      run: cmake --build build --config Release --parallel
+
+    - name: rename
+      run: |
+        cd build;
+        ls | grep precomp_py*.pyd | xargs -I orig mv orig precomp_py.pyd
+
+    - name: Package Artifacts
+      shell: cmd
+      run: |
+        cd build\Release
+        7z a ..\..\precomp-windows-x64.zip precomp.exe *.pyd
+
+    - name: Upload Artifacts (Windows)
+      uses: actions/upload-artifact@v4
+      with:
+        name: precomp-windows-x64
+        path: precomp-windows-x64.zip
+  
+
+
 
   upload_artifacts:
     name: upload
-    needs: [build_linux]
+    needs: [build_linux, build_windows]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v5
