@@ -1,0 +1,63 @@
+name: Build Precomp Neo
+
+on:
+  workflow_dispatch:
+
+jobs:
+  # =================================================================
+  # Linux 构建 (使用 Manylinux 容器以确保 glibc 兼容性)
+  # =================================================================
+  build_linux:
+    name: Linux (Manylinux 2.28)
+    runs-on: ubuntu-latest
+    # 使用官方 manylinux 镜像，确保编译出的 .so 能在旧系统运行
+    container: quay.io/pypa/manylinux_2_28_x86_64
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies and Build
+      run: |
+        # 1. 设置 Python 环境 (使用容器内置的 Python 3.10)
+        export PY_ROOT=/opt/python/cp310-cp310
+        export PATH=$PY_ROOT/bin:$PATH
+        
+        echo "Using Python at: $(which python)"
+        python --version
+        
+        # 2. 安装构建工具
+        pip install cmake pybind11 ninja
+
+        # 3. 配置 CMake
+        # 注意：这里使用了我们在对话中验证过的关键参数
+        mkdir build
+        cd build
+        cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DPYBIND11_FINDPYTHON=ON \
+          -DPython_EXECUTABLE=$PY_ROOT/bin/python \
+          -DPython_ROOT_DIR=$PY_ROOT \
+          -DPython_FIND_STRATEGY=LOCATION \
+          -GNinja
+
+        # 4. 编译
+        cmake --build . --config Release --parallel $(nproc)
+
+    - name: Verify Output
+      run: |
+        ls -l build/
+        # 简单检查 .so 是否生成
+        if ls build/*.so 1> /dev/null 2>&1; then
+          echo "Python extension (.so) found!"
+        else
+          echo "Error: Python extension not found!"
+          exit 1
+        fi
+
+    - name: Upload Artifacts (Linux)
+      uses: actions/upload-artifact@v3
+      with:
+        name: precomp-linux-x86_64
+        path: |
+          build/precomp
+          build/*.so
