@@ -16,7 +16,11 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Install dependencies and Build
+    - name: Install dependencies
+      run: |
+        apt install -y zip
+
+    - name: Build
       run: |
         # 1. 设置 Python 环境 (使用容器内置的 Python 3.10)
         export PY_ROOT=/opt/python/cp310-cp310
@@ -59,10 +63,13 @@ jobs:
         cd build;
         ls | grep precomp_py*.so | xargs -I orig mv orig precomp_py.so
 
+
     - name: Archive Release
-      run: |
-        cd build/;
-        zip -r precomp-linux-x86_64.zip .
+      uses: thedoctor0/zip-release@0.7.5
+      with:
+        type: 'zip'
+        filename: 'precomp-linux-x86_64.zip'
+        directory: build/
 
     - name: Upload Artifacts (Linux)
       uses: actions/upload-artifact@v4
