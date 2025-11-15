@@ -151,11 +151,12 @@ target_compile_definitions(precomp_dll_shared PRIVATE -DPRECOMPDLL)
 add_library(precomp_dll_static STATIC ${GIF_SRC} ${BZIP_SRC} ${ZLIB_SRC} ${PACKARI_SRC}
                                ${PACKJPG_SRC} ${PACKMP3_SRC} ${PREFLATE_SRC}
                                ${BRUNSLI_SRC} ${BROTLI_SRC} ${PRECOMP_UTILS_SRC} ${PRECOMP_IO_SRC} ${FORMAT_HANDLERS_SRC} ${PRECOMP_DLL_SRC} ${LIBPRECOMP_HDR} ${PRECOMP_DLL_HDR})
+target_compile_definitions(precomp_dll_static PRIVATE -DPRECOMPSTATIC)
+
 if (UNIX)
     target_link_libraries(precomp_dll_shared PRIVATE Threads::Threads)
     target_link_libraries(precomp_dll_static PRIVATE Threads::Threads)
 endif()
-target_compile_definitions(precomp_dll_static PRIVATE -DPRECOMPSTATIC)
 
 add_executable(dlltest ${LIBPRECOMP_HDR} ${DLLTEST_SRC})
 target_link_libraries(dlltest PRIVATE precomp_dll_shared)
