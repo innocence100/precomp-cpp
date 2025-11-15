@@ -63,9 +63,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: precomp-linux-x86_64
-        path: |
-          build/precomp
-          build/*.so
+        path: build/
 
   # =================================================================
   # Windows 构建
@@ -105,9 +103,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: precomp-windows-x64
-        path: |
-          build/Release/precomp.exe
-          build/Release/*.pyd
+        path: build/
 
   # =================================================================
   # macOS 构建
@@ -146,7 +142,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: precomp-macos
-        path: |
-          build/precomp
-          build/*.so
-          build/*.dylib # macOS 下 pybind11 生成的后缀可能是 .so 或 .dylib
+        path: build/
