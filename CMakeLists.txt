@@ -187,7 +187,10 @@ install(TARGETS precomp DESTINATION bin)
 # --- 新增：Python 扩展模块 ---
 # 生成 precomp_py.pyd (Windows) 或 precomp_py.so (Linux)
 pybind11_add_module(precomp_py precomp_py.cpp)
-
+if (UNIX AND NOT APPLE)
+    # 强制静态链接 libgcc 和 libstdc++
+    target_link_options(precomp_py PRIVATE -static-libgcc -static-libstdc++)
+endif()
 # 链接静态库
 target_link_libraries(precomp_py PRIVATE precomp_dll_static)
 if (UNIX)
