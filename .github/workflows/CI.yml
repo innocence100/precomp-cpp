@@ -1,4 +1,4 @@
-name: CI
+name: build
 on: 
   workflow_dispatch:
 
@@ -8,11 +8,28 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v6
         with:
-          branch: main
+          python-version: '3.10' 
       
       - name: configure
         run: cmake .
       
       - name: build
         run: make
+
+      - name: rename
+        run: ls | grep precomp_py*.so | xargs -I orig mv orig precomp_py.so
+      - name: upload and release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            libprecomp_dll_shared.so
+            libprecomp_dll_static.a
+            precomp
+            precomp_py.so
+          tag_name: v0.1919.810
+          body: custom build precomp
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
