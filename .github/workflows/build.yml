@@ -65,7 +65,9 @@ jobs:
 
 
     - name: Archive Release
-      run: zip ../precomp-linux-x86_64.zip precomp *.so *.a
+      run: |
+        cd build
+        zip ../precomp-linux-x86_64.zip precomp *.so *.a
 
     - name: Upload Artifacts (Linux)
       uses: actions/upload-artifact@v4
