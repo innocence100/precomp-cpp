@@ -65,81 +65,24 @@ jobs:
         name: precomp-linux-x86_64
         path: build/
 
-  # =================================================================
-  # Windows 构建
-  # =================================================================
-  build_windows:
-    name: Windows (MSVC)
-    runs-on: windows-latest
-    
+  upload_artifacts:
+    name: upload
+    needs: [build_linux]
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
-      run: pip install cmake pybind11
-
-    - name: Configure CMake
-      # Windows 下 pybind11 通常能通过 setup-python 自动找到路径
-      # 但为了保险，我们依然开启 PYBIND11_FINDPYTHON
-      run: |
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND11_FINDPYTHON=ON
-
-    - name: Build
-      run: cmake --build build --config Release --parallel
-
-    - name: rename
-      run: |
-        cd build;
-        ls | grep precomp_py*.pyd | xargs -I orig mv orig precomp_py.pyd
-
-    - name: Upload Artifacts (Windows)
-      uses: actions/upload-artifact@v4
-      with:
-        name: precomp-windows-x64
-        path: build/
-
-  # =================================================================
-  # macOS 构建
-  # =================================================================
-  build_macos:
-    name: macOS
-    runs-on: macos-latest
-    
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-
-    - name: Install dependencies
-      run: pip install cmake pybind11
-
-    - name: Configure CMake
-      run: |
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND11_FINDPYTHON=ON
-
-    - name: Build
-      run: cmake --build build --config Release --parallel
-
-    - name: rename
-      run: |
-        cd build;
-        ls | grep precomp_py*.so | xargs -I orig mv orig precomp_py.so;
-        ls | grep precomp_py*.dylib | xargs -I orig mv orig precomp_py.dylib
-  
-    - name: Upload Artifacts (macOS)
-      uses: actions/upload-artifact@v4
-      with:
-        name: precomp-macos
-        path: build/
+      - uses: actions/download-artifact@v5
+      - name: Display structure of downloaded files
+        run: ls -R
+      
+      - name: upload and release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            precomp-linux-x86_64.zip
+            precomp-windows-x64.zip
+            precomp-macos.zip
+          tag_name: v1.919.810
+          body: precomp python binding
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
