@@ -21,6 +21,7 @@
 #include <optional>
 #include <span>
 #include <unordered_map>
+#include <algorithm>
 
 static constexpr int MAX_PENALTY_BYTES = 16384;
 

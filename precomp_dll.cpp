@@ -948,7 +948,7 @@ bool verify_precompressed_result(Precomp& precomp_mgr, const std::unique_ptr<pre
     if (recompressed_size != result->complete_original_size()) return false;
 
     precomp_mgr.ctx->fin->seekg(input_file_pos, std::ios_base::beg);
-    auto original_data_view = IStreamLikeView(precomp_mgr.ctx->fin.get(), recompressed_size + input_file_pos);
+    auto original_data_view = IStreamLikeView(precomp_mgr.ctx->fin.get(), recompressed_size + (std::streamoff)input_file_pos);
     auto original_data_sha1 = calculate_sha1(original_data_view, 0);
 
     if (original_data_sha1 != recompressed_data_sha1) return false;
@@ -1046,7 +1046,7 @@ std::unique_ptr<RecursionPasstroughStream> recursion_decompress(RecursionContext
   auto new_ctx = std::move(precomp_mgr.ctx);
   recursion_pop(precomp_mgr);
 
-  long long recursion_end_pos = original_pos + recursion_data_length;
+  long long recursion_end_pos = original_pos + (std::streamoff)recursion_data_length;
   new_ctx->fin_length = recursion_data_length;
   // We create a view of the recursion data from the input stream, this way the recursive call to decompress can work as if it were working with a copy of the data
   // on a temporary file, processing it from pos 0 to EOF, while actually only reading from original_pos to recursion_end_pos

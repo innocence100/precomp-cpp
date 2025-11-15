@@ -5,6 +5,9 @@
 #include <filesystem>
 #include <memory>
 
+#include <cstring>
+#include <cstdio>
+
 std::string get_sha1_hash(boost::uuids::detail::sha1& s) {
     unsigned int hash[5];
     s.get_digest(hash);
