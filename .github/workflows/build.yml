@@ -61,7 +61,7 @@ jobs:
     - name: rename
       run: |
         cd build;
-        ls | grep precomp_py*.so | xargs -I orig mv orig precomp_py.so
+        mv precomp_py*.so precomp_py.so
 
 
     - name: Archive Release
@@ -102,9 +102,10 @@ jobs:
       run: cmake --build build --config Release --parallel
 
     - name: rename
+      shell: bash
       run: |
-        cd build;
-        ls | grep precomp_py*.pyd | xargs -I orig mv orig precomp_py.pyd
+        cd build/Release;
+        mv precomp_py*.pyd precomp_py.pyd
 
     - name: Package Artifacts
       shell: cmd
@@ -119,11 +120,52 @@ jobs:
         path: precomp-windows-x64.zip
   
 
+  build_macos:
+    name: macOS
+    runs-on: macos-latest
+    
+    steps:
+    - uses: actions/checkout@v3
 
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install cmake pybind11
+
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND11_FINDPYTHON=ON
+
+    - name: Build
+      run: cmake --build build --config Release --parallel
+
+    - name: rename
+      run: |
+        cd build;
+        mv precomp_py*.so precomp_py.so;
+        mv precomp_py*.dylib precomp_py.dylib
+
+
+    - name: Package Artifacts
+      run: |
+        cd build
+        # macOS 下 pybind11 可能生成 .so 或 .dylib，通配符匹配所有
+        tar -czvf ../precomp-macos-x86_64.tar.gz precomp *.so *.dylib 2>/dev/null || tar -czvf ../precomp-macos-x86_64.tar.gz precomp *.so
+  
+    - name: Upload Artifacts (macOS)
+      uses: actions/upload-artifact@v4
+      with:
+        name: precomp-macos
+        path: precomp-macos-x86_64.tar.gz
 
   upload_artifacts:
     name: upload
-    needs: [build_linux, build_windows]
+    needs: [build_linux, build_windows, build_macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v5
