@@ -53,6 +53,11 @@ jobs:
           echo "Error: Python extension not found!"
           exit 1
         fi
+    
+    - name: rename
+      run: |
+        cd build;
+        ls | grep precomp_py*.so | xargs -I orig mv orig precomp_py.so
 
     - name: Upload Artifacts (Linux)
       uses: actions/upload-artifact@v3
@@ -91,6 +96,11 @@ jobs:
     - name: Build
       run: cmake --build build --config Release --parallel
 
+    - name: rename
+      run: |
+        cd build;
+        ls | grep precomp_py*.pyd | xargs -I orig mv orig precomp_py.pyd
+
     - name: Upload Artifacts (Windows)
       uses: actions/upload-artifact@v3
       with:
@@ -126,6 +136,12 @@ jobs:
     - name: Build
       run: cmake --build build --config Release --parallel
 
+    - name: rename
+      run: |
+        cd build;
+        ls | grep precomp_py*.so | xargs -I orig mv orig precomp_py.so;
+        ls | grep precomp_py*.dylib | xargs -I orig mv orig precomp_py.dylib
+  
     - name: Upload Artifacts (macOS)
       uses: actions/upload-artifact@v3
       with:
@@ -133,4 +149,4 @@ jobs:
         path: |
           build/precomp
           build/*.so
-          # macOS 下 pybind11 生成的后缀可能是 .so 或 .dylib
+          build/*.dylib # macOS 下 pybind11 生成的后缀可能是 .so 或 .dylib
