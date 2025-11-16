@@ -148,14 +148,15 @@ jobs:
       run: |
         cd build;
         mv precomp_py*.so precomp_py.so
+        # mv precomp_py*.dylib precomp_py.dylib
 
 
     - name: Package Artifacts
       run: |
         cd build
         # macOS 下 pybind11 可能生成 .so 或 .dylib，通配符匹配所有
-        tar -czvf ../precomp-macos-x86_64.tar.gz precomp *.so *.dylib 2>/dev/null || tar -czvf ../precomp-macos-x86_64.tar.gz precomp *.so
-  
+        # tar -czvf ../precomp-macos-x86_64.tar.gz precomp *.so *.dylib 2>/dev/null || tar -czvf ../precomp-macos-x86_64.tar.gz precomp *.so
+        tar -czvf ../precomp-macos-x86_64.tar.gz precomp *.so
     - name: Upload Artifacts (macOS)
       uses: actions/upload-artifact@v4
       with:
