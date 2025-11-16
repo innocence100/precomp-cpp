@@ -147,8 +147,7 @@ jobs:
     - name: rename
       run: |
         cd build;
-        mv precomp_py*.so precomp_py.so;
-        mv precomp_py*.dylib precomp_py.dylib
+        mv precomp_py*.so precomp_py.so
 
 
     - name: Package Artifacts
